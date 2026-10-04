@@ -1,0 +1,15 @@
+# Project-specific Python environment
+.venv/
+
+# Private credentials and configuration
+.env
+
+# Python-generated cache files
+__pycache__/
+*.pyc
+
+# Pytest-generated cache
+.pytest_cache/
+
+# macOS metadata
+.DS_Store
