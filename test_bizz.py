@@ -355,3 +355,31 @@ def test_evaluate_free_agent_returns_none_when_all_matching_players_are_protecte
     ]
     result = evaluate_free_agent(roster, free_agent)
     assert result is None
+
+def test_find_projected_upgrades_excludes_zero_gain():
+    free_agent = Player(
+        name="Free Agent WR",
+        team="TEST",
+        position="WR",
+        projected_points=10.0,
+        status="ACTIVE",
+        roster_slot=None,
+    )
+
+    drop_candidate = Player(
+        name="Roster WR",
+        team="TEST",
+        position="WR",
+        projected_points=10.0,
+        status="ACTIVE",
+        roster_slot="BE",
+    )
+
+    evaluation = WaiverEvaluation(
+        free_agent,
+        drop_candidate,
+    )
+
+    result = find_projected_upgrades([evaluation])
+
+    assert result == []
