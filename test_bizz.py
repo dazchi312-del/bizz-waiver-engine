@@ -324,3 +324,34 @@ def test_evaluate_free_agent_skips_ir_drop_candidate():
     assert evaluation is not None
     assert evaluation.drop_candidate is bench_rb
     assert evaluation.projected_gain == pytest.approx(6.0)
+
+def test_evaluate_free_agent_returns_none_when_all_matching_players_are_protected():
+    free_agent = Player(
+        name="Rome Odunze",
+        team="CHI", 
+        position="WR",
+        projected_points=11.8,
+        status="ACTIVE",
+        roster_slot=None,
+    )
+
+    roster = [
+        Player(
+            name="WR One",
+            team="TEST",
+            position="WR",
+            projected_points=12.5,
+            status="ACTIVE",
+            roster_slot="IR",
+        ),
+        Player(
+            name="WR Two",
+            team="TEST",
+            position="WR",
+            projected_points=10.0,
+            status="ACTIVE",
+            roster_slot=None,
+        ),
+    ]
+    result = evaluate_free_agent(roster, free_agent)
+    assert result is None
