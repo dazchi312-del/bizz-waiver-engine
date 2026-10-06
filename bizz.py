@@ -17,6 +17,7 @@ class Player:
     def __str__(self):
         return f"{self.name} ({self.team}, {self.position}) - {self.projected_points} projected points [{self.status}]"
 
+
 class WaiverEvaluation:
     """Represents one possible free-agent add/drop comparison."""
     def __init__(self, free_agent, drop_candidate):
@@ -37,6 +38,25 @@ class WaiverEvaluation:
             f"ADD {self.free_agent.name}, "
             f"DROP {self.drop_candidate.name}, "
             f"+ {self.projected_gain:.1f} projected points"
+        )
+
+    
+class RoleProfile:
+    """Represents how a player's receiving role is changing over time."""
+    def __init__(self, baseline_route_participation, recent_route_participation):
+        # Store the earlier and more recent usage levels separately so
+        # Bizz can compare the player's role without losing the raw evidence.
+        self.baseline_route_participation = baseline_route_participation
+        self.recent_route_participation = recent_route_participation
+
+    @property
+    def route_delta(self):
+        """Return the change in route participation from baseline to recent."""
+        # Keep this derived instead of storing it so it always reflects
+        # the current baseline and recent participation values.
+        return (
+            self.recent_route_participation
+            - self.baseline_route_participation
         )
        
 
@@ -170,3 +190,6 @@ def is_droppable_player(player):
 
 if __name__ == "__main__":
     main()
+    
+
+

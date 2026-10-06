@@ -1,6 +1,7 @@
 import pytest
 from bizz import (
     Player,
+    RoleProfile,
     WaiverEvaluation,
     build_waiver_evaluations,
     evaluate_free_agent,
@@ -31,6 +32,7 @@ def test_positive_projected_gain():
     assert evaluation.projected_gain == pytest.approx(0.8)
     assert evaluation.is_upgrade() is True
 
+
 def test_negative_projected_gain():
     """A lower-projected free agent should not be marked as an upgrade."""
 
@@ -41,6 +43,7 @@ def test_negative_projected_gain():
 
     assert evaluation.projected_gain == pytest.approx(-1.6)
     assert evaluation.is_upgrade() is False
+
 
 def test_no_same_position_comparison():
     """Return None when the roster has no matching position."""
@@ -55,6 +58,7 @@ def test_no_same_position_comparison():
     evaluation = evaluate_free_agent(roster, free_agent)
 
     assert evaluation is None
+
 
 def test_build_waiver_evaluations():
     """Build evaluations only for comparable free agents."""
@@ -79,6 +83,7 @@ def test_build_waiver_evaluations():
     assert isinstance(evaluations[1], WaiverEvaluation)
     assert evaluations[0].free_agent.name == "High RB"
     assert evaluations[1].free_agent.name == "Low RB"
+
 
 def test_rank_waiver_evaluations():
     """Rank waiver evaluations from highest gain to lowest."""
@@ -108,6 +113,7 @@ def test_rank_waiver_evaluations():
     assert ranked[1].free_agent.name == "Small Upgrade"
     assert ranked[2].free_agent.name == "Downgrade"
 
+
 def test_find_projected_upgrades():
     """Keep positive upgrades and reject equal or negative gains."""
 
@@ -136,6 +142,7 @@ def test_find_projected_upgrades():
     assert upgrades[0].free_agent.name == "Upgrade"
     assert upgrades[0].projected_gain == pytest.approx(2.0)
 
+
 def test_convert_espn_player():
     """Translate an ESPN-shaped object into our internal Player model."""
     espn_player = SimpleNamespace(
@@ -153,6 +160,7 @@ def test_convert_espn_player():
     assert player.position == "RB"
     assert player.projected_points == 17.4
     assert player.status == "ACTIVE"
+
 
 def test_convert_espn_players():
     """Translate a collection of ESPN players into internal Player objects."""
@@ -180,6 +188,7 @@ def test_convert_espn_players():
     assert players[0].name == "Waiver RB"
     assert players[1].name == "Waiver WR"
 
+
 def test_find_espn_team():
     """Find our fantasy team by its ESPN team ID."""
     teams = [
@@ -192,6 +201,7 @@ def test_find_espn_team():
     assert team is teams[1]
     assert team.team_name == "The Bizz"
     assert find_espn_team(teams, 99) is None
+
 
 def test_convert_espn_roster_player():
     """Translate an ESPN roster player that uses average projections."""
@@ -207,6 +217,7 @@ def test_convert_espn_roster_player():
 
     assert isinstance(player, Player)
     assert player.projected_points == pytest.approx(14.2)
+
 
 def test_convert_espn_player_with_empty_status():
     """Convert an empty ESPN injury status into NORMAL."""
@@ -233,6 +244,8 @@ def test_convert_espn_player_with_empty_status():
         ("INJURY_RESERVE", False),
     ],
 )
+
+
 def test_is_available_candidate(status, expected):
     # Create a player whos status is the supplied status
     candidate = Player(
@@ -249,6 +262,7 @@ def test_is_available_candidate(status, expected):
     # Assert that the result is expected
     assert result == expected
 
+
 def test_filter_available_candidates_excludes_out():
     """Exclude OUT candidates while preserving the original evaluations."""
     roster_player = Player("Roster RB", "TEST", "RB", 10.0, "ACTIVE")
@@ -263,6 +277,7 @@ def test_filter_available_candidates_excludes_out():
 
     assert filtered_evals == [eval_active]
     assert original_evals == [eval_active, eval_out]
+
 
 def test_convert_espn_player_preserves_ir_slot():
     """Carry fantasy IR placement into the internal model."""
@@ -288,6 +303,8 @@ def test_convert_espn_player_preserves_ir_slot():
         ("ACTIVE", None, False),
     ],
 )
+
+
 def test_is_droppable_player(status, roster_slot, expected):
     """Use fantasy slot placement to determine drop eligibility."""
     player = Player(
@@ -301,7 +318,6 @@ def test_is_droppable_player(status, roster_slot, expected):
 
     assert is_droppable_player(player) == expected
 
-import pytest
 
 def test_evaluate_free_agent_skips_ir_drop_candidate():
     """Compare against an eligible bench player even when IR projects lower."""
@@ -325,10 +341,11 @@ def test_evaluate_free_agent_skips_ir_drop_candidate():
     assert evaluation.drop_candidate is bench_rb
     assert evaluation.projected_gain == pytest.approx(6.0)
 
+
 def test_evaluate_free_agent_returns_none_when_all_matching_players_are_protected():
     free_agent = Player(
         name="Rome Odunze",
-        team="CHI", 
+        team="CHI",
         position="WR",
         projected_points=11.8,
         status="ACTIVE",
@@ -355,6 +372,7 @@ def test_evaluate_free_agent_returns_none_when_all_matching_players_are_protecte
     ]
     result = evaluate_free_agent(roster, free_agent)
     assert result is None
+
 
 def test_find_projected_upgrades_excludes_zero_gain():
     free_agent = Player(
@@ -383,3 +401,31 @@ def test_find_projected_upgrades_excludes_zero_gain():
     result = find_projected_upgrades([evaluation])
 
     assert result == []
+
+
+def test_role_profile_route_delta():
+    """Measure an expanding receiving role from baseline to recent usage."""
+    baseline = 0.63
+    recent = 0.815
+
+    profile = RoleProfile(
+        baseline_route_participation=baseline,
+        recent_route_participation=recent,
+    )
+
+    assert profile.route_delta == pytest.approx(0.185)
+
+
+def test_role_profile_negative_route_delta():
+    """Preserve a negative delta when a receiving role declines."""
+    baseline = 0.80
+    recent = 0.65
+
+    profile = RoleProfile(
+        baseline_route_participation=baseline,
+        recent_route_participation=recent,
+    )
+
+    assert profile.route_delta == pytest.approx(-0.15)
+    
+
