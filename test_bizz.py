@@ -427,5 +427,25 @@ def test_role_profile_negative_route_delta():
     )
 
     assert profile.route_delta == pytest.approx(-0.15)
-    
 
+
+def test_role_profile_target_delta():
+    """Evaluate expanding receiving roles using target share increase."""
+    baseline = 0.18
+    recent = 0.27
+
+    profile = RoleProfile(
+        baseline_target_share=baseline,
+        recent_target_share=recent
+    )
+
+    assert profile.target_delta == pytest.approx(0.09)
+
+def test_role_profile_route_delta_raises_when_route_data_missing():
+    profile = RoleProfile(
+        baseline_target_share=0.18,
+        recent_target_share=0.27,
+    )
+
+    with pytest.raises(ValueError):
+        _ = profile.route_delta

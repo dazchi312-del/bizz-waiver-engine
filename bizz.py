@@ -43,21 +43,37 @@ class WaiverEvaluation:
     
 class RoleProfile:
     """Represents how a player's receiving role is changing over time."""
-    def __init__(self, baseline_route_participation, recent_route_participation):
+    def __init__(
+            self,
+            baseline_route_participation=None,
+            recent_route_participation=None,
+            baseline_target_share=None,
+            recent_target_share=None,
+    ):
         # Store the earlier and more recent usage levels separately so
         # Bizz can compare the player's role without losing the raw evidence.
         self.baseline_route_participation = baseline_route_participation
         self.recent_route_participation = recent_route_participation
+        self.baseline_target_share = baseline_target_share
+        self.recent_target_share = recent_target_share
 
     @property
     def route_delta(self):
-        """Return the change in route participation from baseline to recent."""
-        # Keep this derived instead of storing it so it always reflects
-        # the current baseline and recent participation values.
-        return (
-            self.recent_route_participation
-            - self.baseline_route_participation
-        )
+        if (
+            self.baseline_route_participation is None
+            or self.recent_route_participation is None
+        ):
+            raise ValueError("Insufficient route participation data.")
+        return self.recent_route_participation - self.baseline_route_participation
+    @property
+    def target_delta(self):
+        if (
+            self.baseline_target_share is None
+            or self.recent_target_share is None
+        ):
+            raise ValueError("Insufficient target share data.")
+        return self.recent_target_share - self.baseline_target_share
+
        
 
 def main():
@@ -190,6 +206,6 @@ def is_droppable_player(player):
 
 if __name__ == "__main__":
     main()
-    
+
 
 
