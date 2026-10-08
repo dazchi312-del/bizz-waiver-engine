@@ -4,9 +4,19 @@ The Bizz Weekly Edge Engine.
 Analyzes league, roster, projection, and opportunity data to produce
 an explainable weekly waiver-claim plan.
 """
+
+
 class Player:
     """Represents one NFL player and the weekly data used by the analyzer."""
-    def __init__(self, name, team, position, projected_points, status, roster_slot=None):
+    def __init__(
+        self,
+        name,
+        team,
+        position,
+        projected_points,
+        status,
+        roster_slot=None,
+    ):
         self.name = name
         self.team = team
         self.position = position
@@ -15,7 +25,10 @@ class Player:
         self.roster_slot = roster_slot
 
     def __str__(self):
-        return f"{self.name} ({self.team}, {self.position}) - {self.projected_points} projected points [{self.status}]"
+        return (
+            f"{self.name} ({self.team}, {self.position}) - "
+            f"{self.projected_points} projected points [{self.status}]"
+        )
 
 
 class WaiverEvaluation:
@@ -40,15 +53,18 @@ class WaiverEvaluation:
             f"+ {self.projected_gain:.1f} projected points"
         )
 
-    
+
 class RoleProfile:
     """Represents how a player's receiving role is changing over time."""
+
     def __init__(
-            self,
-            baseline_route_participation=None,
-            recent_route_participation=None,
-            baseline_target_share=None,
-            recent_target_share=None,
+        self,
+        baseline_route_participation=None,
+        recent_route_participation=None,
+        baseline_target_share=None,
+        recent_target_share=None,
+        baseline_usage=None,
+        recent_usage=None,
     ):
         # Store the earlier and more recent usage levels separately so
         # Bizz can compare the player's role without losing the raw evidence.
@@ -56,6 +72,8 @@ class RoleProfile:
         self.recent_route_participation = recent_route_participation
         self.baseline_target_share = baseline_target_share
         self.recent_target_share = recent_target_share
+        self.baseline_usage = baseline_usage
+        self.recent_usage = recent_usage
 
     @property
     def route_delta(self):
@@ -64,7 +82,12 @@ class RoleProfile:
             or self.recent_route_participation is None
         ):
             raise ValueError("Insufficient route participation data.")
-        return self.recent_route_participation - self.baseline_route_participation
+
+        return (
+            self.recent_route_participation
+            - self.baseline_route_participation
+        )
+
     @property
     def target_delta(self):
         if (
@@ -72,22 +95,62 @@ class RoleProfile:
             or self.recent_target_share is None
         ):
             raise ValueError("Insufficient target share data.")
+
         return self.recent_target_share - self.baseline_target_share
 
-       
+    @property
+    def tprr_delta(self):
+        """Return the change in TPRR from baseline to recent usage."""
+        if (
+            self.baseline_usage is None
+            or self.recent_usage is None
+        ):
+            raise ValueError(
+                "Insufficient usage data to calculate tprr_delta"
+            )
+
+        return self.recent_usage.tprr - self.baseline_usage.tprr
+
+
+class UsageWindow:
+    """Represents receiving usage within one sample period."""
+
+    def __init__(
+        self,
+        targets,
+        routes_run,
+    ):
+        self.targets = targets
+        self.routes_run = routes_run
+
+    @property
+    def tprr(self):
+        """Return targets earned per route run."""
+        if (
+            self.targets is None
+            or self.routes_run is None
+            or self.routes_run == 0
+        ):
+            raise ValueError("Insufficient TPRR data")
+
+        return self.targets / self.routes_run
+
 
 def main():
-    #Mission Control: load data, request evaluations, and present results.
+    # Mission Control: load data, request evaluations, and present results.
     roster = load_sample_roster()
     free_agents = load_sample_free_agents()
 
-    #Build valid Add/Drop comparisons from the available players
+    # Build valid Add/Drop comparisons from the available players.
     evaluations = build_waiver_evaluations(roster, free_agents)
-    #Keep only free agents that improve the roster
+
+    # Keep only free agents that improve the roster.
     upgrades = find_projected_upgrades(evaluations)
-    #Put strongest projected upgrades first
+
+    # Put strongest projected upgrades first.
     ranked_upgrades = rank_waiver_evaluations(upgrades)
-    #Present evaluation to user
+
+    # Present evaluation to user.
     if not ranked_upgrades:
         print("No projected waiver upgrades found")
         return
@@ -110,7 +173,7 @@ def load_sample_free_agents():
         Player("Test waiver RB", "Test", "RB", 17.4, "ACTIVE"))
     free_agents.append(
         Player("Test waiver RB low", "Test", "RB", 15.0, "ACTIVE"))
-    # This TE fixture excercises the no-compairison guard in main()
+    # This TE fixture exercises the no-compairison guard in main()
     free_agents.append(
         Player("Test waiver TE", "Test", "TE", 10, "Active")
     )
@@ -134,7 +197,7 @@ def find_lowest_projected_player(roster, position):
     return lowest_player
 
 def evaluate_free_agent(roster, free_agent):
-    """ Return an evaluation or None when no eligible position match exicists """
+    """Return an evaluation or None when no eligible position match exists."""
     droppable_players = []
 
     for player in roster:
@@ -150,7 +213,7 @@ def evaluate_free_agent(roster, free_agent):
     return WaiverEvaluation(free_agent, drop_candidate)
 
 def build_waiver_evaluations(roster, free_agents):
-    """Return valid evaluation of all comparable free agents"""
+    """Return valid evaluations of all comparable free agents."""
 
     evaluations = []
 
@@ -161,14 +224,14 @@ def build_waiver_evaluations(roster, free_agents):
         if evaluation is None:
             continue
         evaluations.append(evaluation)
-    return(evaluations)
+    return evaluations
 
 def get_projected_gain(evaluation):
-    """Return the projected gain used to rank an evaluation"""
+    """Return the projected gain used to rank an evaluation."""
     return evaluation.projected_gain
 
 def rank_waiver_evaluations(evaluations):
-    """Return a new list from highest projected gain to lowest"""
+    """Return a new list from highest projected gain to lowest."""
     return sorted(
         evaluations,
         key=get_projected_gain,
@@ -176,7 +239,7 @@ def rank_waiver_evaluations(evaluations):
     )
 
 def find_projected_upgrades(evaluations):
-    """Return only evaluations that improve the roster"""
+    """Return only evaluations that improve the roster."""
     upgrades = []
 
     for evaluation in evaluations:
@@ -185,13 +248,13 @@ def find_projected_upgrades(evaluations):
     return upgrades
 
 def is_available_candidate(player):
-    """Return if player is elgible for recommendation"""
+    """Return whether a player is eligible for recommendation."""
     unavailable_statuses = {"OUT", "INJURY_RESERVE"}
 
     return player.status not in unavailable_statuses
 
 def filter_available_candidates(evaluations):
-    """Keep evaluations whos free agents  meet our availability policy"""
+    """Keep evaluations whose free agents meet our availability policy."""
     available_evaluations = []
 
     for evaluation in evaluations:
@@ -201,7 +264,7 @@ def filter_available_candidates(evaluations):
     return available_evaluations
 
 def is_droppable_player(player):
-    """Return whether our policy allows considering this player for a drop"""
+    """Return whether our policy allows considering this player for a drop."""
     return player.roster_slot is not None and player.roster_slot != "IR"
 
 if __name__ == "__main__":

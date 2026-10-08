@@ -2,6 +2,7 @@ import pytest
 from bizz import (
     Player,
     RoleProfile,
+    UsageWindow,
     WaiverEvaluation,
     build_waiver_evaluations,
     evaluate_free_agent,
@@ -441,6 +442,7 @@ def test_role_profile_target_delta():
 
     assert profile.target_delta == pytest.approx(0.09)
 
+
 def test_role_profile_route_delta_raises_when_route_data_missing():
     profile = RoleProfile(
         baseline_target_share=0.18,
@@ -449,3 +451,64 @@ def test_role_profile_route_delta_raises_when_route_data_missing():
 
     with pytest.raises(ValueError):
         _ = profile.route_delta
+
+
+def test_usage_window_tprr():
+    window = UsageWindow(
+        targets=12,
+        routes_run=60,
+    )
+
+    assert window.tprr == pytest.approx(0.20)
+
+
+def test_usage_window_tprr_raises_when_routes_are_zero():
+    window = UsageWindow(
+        targets=12,
+        routes_run=0,
+    )
+
+    with pytest.raises(ValueError):
+        _ = window.tprr
+
+
+def test_usage_window_tprr_allows_zero_targets():
+    window = UsageWindow(
+        targets=0,
+        routes_run=40,
+    )
+
+    assert window.tprr == pytest.approx(0.0)
+
+
+def test_role_profile_tprr_delta():
+    baseline = UsageWindow(
+        targets=8,
+        routes_run=40,
+    )
+
+    recent = UsageWindow(
+        targets=12,
+        routes_run=40,
+    )
+
+    profile = RoleProfile(
+        baseline_usage=baseline,
+        recent_usage=recent,
+    )
+
+    assert profile.tprr_delta == pytest.approx(0.10)
+
+
+def test_role_profile_tprr_delta_raises_when_usage_missing():
+    baseline = UsageWindow(
+        targets=8,
+        routes_run=40,
+    )
+
+    profile = RoleProfile(
+        baseline_usage=baseline,
+    )
+
+    with pytest.raises(ValueError):
+        _ = profile.tprr_delta
