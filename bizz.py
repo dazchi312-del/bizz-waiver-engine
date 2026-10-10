@@ -136,6 +136,21 @@ class UsageWindow:
         return self.targets / self.routes_run
 
 
+class RoleSignal:
+    """Interprets role-profile metrics as higher-level usage signals."""
+
+    def __init__(self, profile: RoleProfile):
+        self.profile = profile
+
+    def is_multi_signal_expansion(self):
+        """Return True when all tracked role deltas are positive."""
+        return (
+            self.profile.route_delta > 0
+            and self.profile.target_delta > 0
+            and self.profile.tprr_delta > 0
+        )
+
+
 def main():
     # Mission Control: load data, request evaluations, and present results.
     roster = load_sample_roster()

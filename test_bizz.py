@@ -2,6 +2,7 @@ import pytest
 from bizz import (
     Player,
     RoleProfile,
+    RoleSignal,
     UsageWindow,
     WaiverEvaluation,
     build_waiver_evaluations,
@@ -512,3 +513,56 @@ def test_role_profile_tprr_delta_raises_when_usage_missing():
 
     with pytest.raises(ValueError):
         _ = profile.tprr_delta
+
+
+def test_multi_signal_expansion_returns_true_when_all_deltas_positive():
+    """Recognize a role expansion when all opportunity signals improve."""
+    baseline = UsageWindow(
+        targets=10,
+        routes_run=50,
+    )
+
+    recent = UsageWindow(
+        targets=15,
+        routes_run=60,
+    )
+
+    profile = RoleProfile(
+        baseline_route_participation=0.60,
+        recent_route_participation=0.75,
+        baseline_target_share=0.18,
+        recent_target_share=0.25,
+        baseline_usage=baseline,
+        recent_usage=recent,
+    )
+
+    signal = RoleSignal(profile)
+
+    assert signal.is_multi_signal_expansion() is True
+
+
+def test_multi_signal_expansion_returns_false_when_signals_do_not_all_improve():
+    """Reject multi-signal expansion when some role signals remain flat."""
+
+    baseline = UsageWindow(
+        targets=10,
+        routes_run=50,
+    )
+
+    recent = UsageWindow(
+        targets=12,
+        routes_run=60,
+    )
+    # 2. Pass route participation directly as decimals to RoleProfile
+    profile = RoleProfile(
+        baseline_route_participation=0.60,
+        recent_route_participation=0.75,
+        baseline_target_share=0.18,
+        recent_target_share=0.18,
+        baseline_usage=baseline,
+        recent_usage=recent,
+    )
+
+    signal = RoleSignal(profile)
+
+    assert signal.is_multi_signal_expansion() is False
