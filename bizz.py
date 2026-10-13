@@ -150,6 +150,14 @@ class RoleSignal:
             and self.profile.tprr_delta > 0
         )
 
+    def is_route_led_expansion(self):
+        """Return True when routes rise, and target signals remain flat."""
+        return (
+            self.profile.route_delta > 0
+            and self.profile.target_delta == 0
+            and self.profile.tprr_delta == 0
+        )
+
 
 def main():
     # Mission Control: load data, request evaluations, and present results.
