@@ -158,6 +158,14 @@ class RoleSignal:
             and self.profile.tprr_delta == 0
         )
 
+    def is_target_earning_expansion(self):
+        """Return True if route participation is flat while target share and TPRR rise."""
+        route_flat = self.profile.route_delta == 0
+        target_share_up = self.profile.target_delta > 0
+        tprr_up = self.profile.tprr_delta > 0
+
+        return route_flat and target_share_up and tprr_up
+
 
 def main():
     # Mission Control: load data, request evaluations, and present results.

@@ -598,7 +598,7 @@ def test_route_led_expansion_returns_true_when_routes_increase_and_other_signals
 def test_is_route_led_expansion_returns_false_when_all_signals_improve():
     """Do not call a confirmed multi-signal expansion route-led."""
     baseline = UsageWindow(
-            targets=10,
+        targets=10,
         routes_run=50,
     )
 
@@ -619,3 +619,52 @@ def test_is_route_led_expansion_returns_false_when_all_signals_improve():
     signal = RoleSignal(profile)
 
     assert signal.is_route_led_expansion() is False
+
+def test_target_earning_expansion_returns_true_when_target_signals_rise_and_routes_flat():
+    """Recognize target-earning growth while route participation stays flat."""
+    baseline = UsageWindow(
+        targets=10,
+        routes_run=50,
+    )
+
+    recent = UsageWindow(
+        targets=12,
+        routes_run=50,
+    )
+
+    profile = RoleProfile(
+            baseline_route_participation=0.75,
+            recent_route_participation=0.75,
+            baseline_target_share=0.16,
+            recent_target_share=0.24,
+            baseline_usage=baseline,
+            recent_usage=recent,
+        )
+
+    signal = RoleSignal(profile)
+
+    assert signal.is_target_earning_expansion() is True
+
+def test_target_earning_expansion_returns_false_when_all_signals_improve():
+    baseline = UsageWindow(
+        targets=10,
+        routes_run=50,
+    )
+
+    recent = UsageWindow(
+        targets=15,
+        routes_run=60,
+    )
+
+    profile = RoleProfile(
+            baseline_route_participation=0.60,
+            recent_route_participation=0.75,
+            baseline_target_share=0.18,
+            recent_target_share=0.25,
+            baseline_usage=baseline,
+            recent_usage=recent,
+        )
+
+    signal = RoleSignal(profile)
+
+    assert signal.is_target_earning_expansion() is False
