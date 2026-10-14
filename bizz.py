@@ -166,6 +166,13 @@ class RoleSignal:
 
         return route_flat and target_share_up and tprr_up
 
+    def is_route_dilution(self):
+        """Return True when routes rise, target share stays flat, and TPRR falls."""
+        route_up = self.profile.route_delta > 0
+        target_share_flat = self.profile.target_delta == 0
+        tprr_down = self.profile.tprr_delta < 0
+
+        return route_up and target_share_flat and tprr_down
 
 def main():
     # Mission Control: load data, request evaluations, and present results.
