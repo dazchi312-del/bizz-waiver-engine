@@ -174,6 +174,7 @@ class RoleSignal:
 
         return route_up and target_share_flat and tprr_down
 
+
 def main():
     # Mission Control: load data, request evaluations, and present results.
     roster = load_sample_roster()
@@ -304,6 +305,19 @@ def filter_available_candidates(evaluations):
 def is_droppable_player(player):
     """Return whether our policy allows considering this player for a drop."""
     return player.roster_slot is not None and player.roster_slot != "IR"
+
+def is_positive_change(delta, threshold):
+    """Return True if delta strictly exceeds the threshold."""
+    return delta > threshold
+
+def is_negative_change(delta, threshold):
+    """Return True if delta falls strictly below the negative threshold."""
+    return delta < -threshold
+
+
+def is_flat_change(delta, threshold):
+    """Return true if absolute change is within the threshold."""
+    return abs(delta) <= threshold
 
 if __name__ == "__main__":
     main()

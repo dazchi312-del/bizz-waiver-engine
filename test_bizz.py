@@ -12,6 +12,10 @@ from bizz import (
     is_available_candidate,
     filter_available_candidates,
     is_droppable_player,
+    is_flat_change,
+    is_negative_change,
+    is_positive_change,
+
 )
 from types import SimpleNamespace
 from espn_provider import (
@@ -719,3 +723,59 @@ def test_route_dilution_returns_false_when_tprr_stays_flat():
 
     assert signal.is_route_dilution() is False
 
+def test_is_positive_change_returns_true_above_threshold():
+    delta = 0.05
+    threshold = 0.03
+
+    result = is_positive_change(delta, threshold)
+
+    assert result is True
+
+def test_is_positive_change_returns_false_at_threshold():
+    delta = 0.03
+    threshold = 0.03
+
+    result = is_positive_change(delta, threshold)
+
+    assert result is False
+
+def test_is_flat_change_returns_true_inside_positive_threshold():
+    delta = 0.02
+    threshold = 0.03
+
+    result = is_flat_change(delta, threshold)
+
+    assert result is True
+
+def test_is_flat_change_returns_true_inside_negative_threshold():
+    delta = 0.02
+    threshold = 0.03
+
+    result = is_flat_change(delta, threshold)
+
+    assert result is True
+
+def test_is_flat_change_returns_false_outside_of_threshold():
+
+    delta = 0.04
+    threshold = 0.03
+
+    result = is_flat_change(delta, threshold)
+
+    assert result is False
+
+def test_is_negative_change_returns_true_below_negative_threshold():
+    delta = -0.05
+    threshold = 0.03
+
+    result = is_negative_change(delta, threshold)
+
+    assert result is True
+
+def test_is_negative_change_returns_false_at_negative_threshold():
+    delta = -0.03
+    threshold = 0.03
+
+    result = is_flat_change(delta, threshold)
+
+    assert result is True
