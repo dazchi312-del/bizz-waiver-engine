@@ -3,6 +3,7 @@ from bizz import (
     Player,
     RoleProfile,
     RoleSignal,
+    RoleThresholds,
     UsageWindow,
     WaiverEvaluation,
     build_waiver_evaluations,
@@ -636,6 +637,12 @@ def test_target_earning_expansion_returns_true_when_target_signals_rise_and_rout
         routes_run=50,
     )
 
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.02,
+        tprr=0.03,
+    )
+
     profile = RoleProfile(
         baseline_route_participation=0.75,
         recent_route_participation=0.75,
@@ -645,7 +652,7 @@ def test_target_earning_expansion_returns_true_when_target_signals_rise_and_rout
         recent_usage=recent,
     )
 
-    signal = RoleSignal(profile)
+    signal = RoleSignal(profile, thresholds)
 
     assert signal.is_target_earning_expansion() is True
 
@@ -660,6 +667,12 @@ def test_target_earning_expansion_returns_false_when_all_signals_improve():
         routes_run=60,
     )
 
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.02,
+        tprr=0.03,
+    )
+
     profile = RoleProfile(
         baseline_route_participation=0.60,
         recent_route_participation=0.75,
@@ -669,7 +682,7 @@ def test_target_earning_expansion_returns_false_when_all_signals_improve():
         recent_usage=recent,
     )
 
-    signal = RoleSignal(profile)
+    signal = RoleSignal(profile, thresholds)
 
     assert signal.is_target_earning_expansion() is False
 
@@ -686,6 +699,12 @@ def test_route_dilution_returns_true_when_routes_rise_and_tprr_falls():
         routes_run=70,
     )
 
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.02,
+        tprr=0.03,
+    )
+
     profile = RoleProfile(
         baseline_route_participation=0.60,
         recent_route_participation=0.80,
@@ -694,7 +713,7 @@ def test_route_dilution_returns_true_when_routes_rise_and_tprr_falls():
         baseline_usage=baseline,
         recent_usage=recent,
     )
-    signal = RoleSignal(profile)
+    signal = RoleSignal(profile, thresholds)
 
     assert signal.is_route_dilution() is True
 
@@ -710,6 +729,12 @@ def test_route_dilution_returns_false_when_tprr_stays_flat():
         routes_run=60,
     )
 
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.02,
+        tprr=0.03,
+    )
+
     profile = RoleProfile(
         baseline_route_participation=0.60,
         recent_route_participation=0.75,
@@ -719,7 +744,7 @@ def test_route_dilution_returns_false_when_tprr_stays_flat():
         recent_usage=recent,
     )
 
-    signal = RoleSignal(profile)
+    signal = RoleSignal(profile, thresholds)
 
     assert signal.is_route_dilution() is False
 
@@ -779,3 +804,83 @@ def test_is_negative_change_returns_false_at_negative_threshold():
     result = is_flat_change(delta, threshold)
 
     assert result is True
+
+def test_role_thresholds_stores_metric_specific_thresholds():
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.03,
+        tprr=0.04,
+    )
+
+    assert thresholds.route == 0.05
+    assert thresholds.target_share == 0.03
+    assert thresholds.tprr == 0.04
+
+def test_role_signal_stores_thresholds():
+    profile = RoleProfile(
+        baseline_route_participation=0.60,
+        recent_route_participation=0.75,
+        baseline_target_share=0.18,
+        recent_target_share=0.25,
+    )
+
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.03,
+        tprr=0.04,
+    )
+
+    signal = RoleSignal(profile, thresholds)
+
+    assert signal.thresholds is thresholds
+
+def test_is_route_dilution_is_true_when_deltas_cross_our_thresholds():
+    profile = RoleProfile(
+        baseline_route_participation=0.60,
+        recent_route_participation=0.75,
+        baseline_target_share=0.18,
+        recent_target_share=0.19,
+        baseline_usage=UsageWindow(targets=10, routes_run=50),  # TPRR = 0.20
+        recent_usage=UsageWindow(targets=10, routes_run=70),    # TPRR ≈ 0.143
+    )
+
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.02,
+        tprr=0.03,
+    )
+
+    signal = RoleSignal(profile, thresholds)
+
+    assert signal.is_route_dilution() is True
+
+
+def test_is_target_earning_expansion_returns_true_within_our_thresholds():
+    baseline = UsageWindow(
+        targets=10,
+        routes_run=50,
+    )
+
+    recent = UsageWindow(
+        targets=12,
+        routes_run=50,
+    )
+
+    profile = RoleProfile(
+        baseline_route_participation=0.75,
+        recent_route_participation=0.75,
+        baseline_target_share=0.16,
+        recent_target_share=0.24,
+        baseline_usage=baseline,
+        recent_usage=recent,
+    )
+
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.02,
+        tprr=0.03,
+    )
+
+    signal = RoleSignal(profile, thresholds)
+
+    assert signal.is_target_earning_expansion() is True
