@@ -532,6 +532,12 @@ def test_multi_signal_expansion_returns_true_when_all_deltas_positive():
         routes_run=60,
     )
 
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.02,
+        tprr=0.03,
+    )
+
     profile = RoleProfile(
         baseline_route_participation=0.60,
         recent_route_participation=0.75,
@@ -541,7 +547,7 @@ def test_multi_signal_expansion_returns_true_when_all_deltas_positive():
         recent_usage=recent,
     )
 
-    signal = RoleSignal(profile)
+    signal = RoleSignal(profile, thresholds)
 
     assert signal.is_multi_signal_expansion() is True
 
@@ -558,6 +564,12 @@ def test_multi_signal_expansion_returns_false_when_signals_do_not_all_improve():
         targets=12,
         routes_run=60,
     )
+
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.02,
+        tprr=0.03,
+    )
     # 2. Pass route participation directly as decimals to RoleProfile
     profile = RoleProfile(
         baseline_route_participation=0.60,
@@ -568,7 +580,7 @@ def test_multi_signal_expansion_returns_false_when_signals_do_not_all_improve():
         recent_usage=recent,
     )
 
-    signal = RoleSignal(profile)
+    signal = RoleSignal(profile, thresholds)
 
     assert signal.is_multi_signal_expansion() is False
 
@@ -585,6 +597,12 @@ def test_route_led_expansion_returns_true_when_routes_increase_and_other_signals
         targets=12,
         routes_run=60,
     )
+
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.02,
+        tprr=0.03,
+    )
     # 2. Pass route participation directly as decimals to RoleProfile
     profile = RoleProfile(
         baseline_route_participation=0.60,
@@ -595,7 +613,7 @@ def test_route_led_expansion_returns_true_when_routes_increase_and_other_signals
         recent_usage=recent,
     )
 
-    signal = RoleSignal(profile)
+    signal = RoleSignal(profile, thresholds)
 
     assert signal.is_route_led_expansion() is True
 
@@ -612,6 +630,12 @@ def test_is_route_led_expansion_returns_false_when_all_signals_improve():
         routes_run=60,
     )
 
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.02,
+        tprr=0.03,
+    )
+
     profile = RoleProfile(
         baseline_route_participation=0.60,
         recent_route_participation=0.75,
@@ -621,7 +645,7 @@ def test_is_route_led_expansion_returns_false_when_all_signals_improve():
         recent_usage=recent,
     )
 
-    signal = RoleSignal(profile)
+    signal = RoleSignal(profile, thresholds)
 
     assert signal.is_route_led_expansion() is False
 
@@ -884,3 +908,66 @@ def test_is_target_earning_expansion_returns_true_within_our_thresholds():
     signal = RoleSignal(profile, thresholds)
 
     assert signal.is_target_earning_expansion() is True
+
+
+def test_is_route_led_expansion_returns_true_within_our_thresholds():
+    baseline = UsageWindow(
+        targets=10,
+        routes_run=50,
+    )
+
+    recent = UsageWindow(
+        targets=12,
+        routes_run=60,
+    )
+
+    profile = RoleProfile(
+        baseline_route_participation=0.60,
+        recent_route_participation=0.75,
+        baseline_target_share=0.18,
+        recent_target_share=0.18,
+        baseline_usage=baseline,
+        recent_usage=recent,
+    )
+
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.02,
+        tprr=0.03,
+    )
+
+    signal = RoleSignal(profile, thresholds)
+
+    assert signal.is_route_led_expansion() is True
+
+
+def test_is_multi_signal_expansion_returns_true_within_our_thresholds():
+    """Recognize a role expansion when all opportunity signals improve."""
+    baseline = UsageWindow(
+        targets=10,
+        routes_run=50,
+    )
+
+    recent = UsageWindow(
+        targets=15,
+        routes_run=60,
+    )
+
+    thresholds = RoleThresholds(
+        route=0.05,
+        target_share=0.02,
+        tprr=0.03,
+    )
+
+    profile = RoleProfile(
+        baseline_route_participation=0.60,
+        recent_route_participation=0.75,
+        baseline_target_share=0.18,
+        recent_target_share=0.25,
+        baseline_usage=baseline,
+        recent_usage=recent,
+    )
+
+    signal = RoleSignal(profile, thresholds)
+
+    assert signal.is_multi_signal_expansion() is True

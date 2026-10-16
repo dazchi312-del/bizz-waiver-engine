@@ -162,19 +162,37 @@ class RoleSignal:
 
     def is_multi_signal_expansion(self):
         """Return True when all tracked role deltas are positive."""
-        return (
-            self.profile.route_delta > 0
-            and self.profile.target_delta > 0
-            and self.profile.tprr_delta > 0
+        if self.thresholds is None:
+            raise ValueError("RoleThresholds required for threshold-awware classification")
+        route_up = is_positive_change(
+            self.profile.route_delta, self.thresholds.route
         )
+        target_share_up = is_positive_change(
+            self.profile.target_delta, self.thresholds.target_share
+        )
+        tprr_up = is_positive_change(
+            self.profile.tprr_delta, self.thresholds.tprr
+        )
+
+        return route_up and target_share_up and tprr_up
+
 
     def is_route_led_expansion(self):
         """Return True when routes rise, and target signals remain flat."""
-        return (
-            self.profile.route_delta > 0
-            and self.profile.target_delta == 0
-            and self.profile.tprr_delta == 0
+        if self.thresholds is None:
+            raise ValueError("RoleThresholds required for threshold-aware classification.")
+        route_up = is_positive_change(
+            self.profile.route_delta, self.thresholds.route
         )
+        target_share_flat = is_flat_change(
+            self.profile.target_delta, self.thresholds.target_share
+        )
+        tprr_flat = is_flat_change(
+            self.profile.tprr_delta, self.thresholds.tprr
+        )
+
+        return route_up and target_share_flat and tprr_flat
+
 
     def is_target_earning_expansion(self):
         """Return True if route participation is flat while target share and TPRR rise."""
